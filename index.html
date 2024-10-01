@@ -15,45 +15,73 @@
             justify-content: center;
             align-items: center;
             font-family: 'Arial', sans-serif;
-            background: url('A_background_image_representing_home_automation,_s.png') no-repeat center center fixed; /* Background image */
-            background-size: cover; /* Ensures the background covers the whole page */
-        }
-
-        /* Adding a subtle overlay for text readability */
-        body::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4); /* Dark overlay for readability */
-            z-index: -1; /* Ensure the overlay stays behind the content */
+            background: linear-gradient(135deg, #fbc2eb, #a6c1ee); /* Soft background gradient */
         }
 
         /* Sensor Row Styling */
-        .sensor-row {
+        .sensor-container {
+            display: flex;
+            justify-content: space-around;
             width: 100%;
-            padding: 20px;
-            text-align: center;
-            background-color: rgba(255, 255, 255, 0.8); /* Semi-transparent background */
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-            border-radius: 10px;
-            margin: 10px;
-            font-size: 28px;
+            max-width: 600px;
+            margin-bottom: 20px;
+        }
+
+        .circle-container {
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #eecda3, #ef629f); /* Gradient for temperature */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Humidity Circle Gradient */
+        .humidity-container {
+            background: linear-gradient(135deg, #89f7fe, #66a6ff); /* Gradient for humidity */
+        }
+
+        /* Inner circle for displaying values */
+        .circle-value {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 36px;
             color: #333;
-            box-sizing: border-box;
+            position: relative;
         }
 
-        /* Temperature and Humidity styling */
-        #temperature {
-            background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%);
-            color: white;
+        /* Sensor Value Text Styling */
+        .sensor-text {
+            font-size: 50px;
+            font-weight: bold;
+            color: #ef629f; /* Matching the inner gradient color */
         }
 
-        #humidity {
-            background: linear-gradient(135deg, #89f7fe 0%, #66a6ff 100%);
-            color: white;
+        .humidity-text {
+            color: #66a6ff; /* Matching the humidity gradient */
+        }
+
+        /* Scale Styling */
+        .scale-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0 10px;
+            position: absolute;
+            top: -30px;
+        }
+
+        .scale-container span {
+            font-size: 14px;
+            color: #fff;
         }
 
         /* Button container and layout */
@@ -66,7 +94,7 @@
             box-sizing: border-box;
         }
 
-        /* Button styling */
+        /* Button Styling */
         button {
             flex: 1 1 45%;
             height: 120px;
@@ -78,6 +106,7 @@
             color: #fff;
             transition: transform 0.3s, background-color 0.3s;
             background: linear-gradient(135deg, #7f7fd5, #86a8e7, #91eae4);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
 
         /* Button Hover Effect */
@@ -86,27 +115,19 @@
             background: linear-gradient(135deg, #6d6dfa, #5fa8fa, #70e0e0);
         }
 
-        /* Media Query for Larger Screens (like laptops) */
+        /* Media Query for Larger Screens */
         @media (min-width: 768px) {
             button {
                 flex: 1 1 22%;
                 height: 150px;
             }
-
-            .sensor-row {
-                font-size: 32px;
-            }
         }
 
-        /* Media Query for Very Small Screens (like small phones) */
+        /* Media Query for Small Screens */
         @media (max-width: 480px) {
             button {
                 font-size: 18px;
                 height: 80px;
-            }
-
-            .sensor-row {
-                font-size: 22px;
             }
         }
     </style>
@@ -116,14 +137,29 @@
 </head>
 <body>
 
-    <!-- Temperature Display Row -->
-    <div class="sensor-row" id="temperature">
-        Temperature: -- °C
-    </div>
+    <!-- Temperature and Humidity Circular Displays -->
+    <div class="sensor-container">
+        <!-- Temperature Circle -->
+        <div class="circle-container">
+            <div class="circle-value">
+                <span class="sensor-text" id="temperature-value">--</span>
+            </div>
+            <div class="scale-container">
+                <span>20°C</span>
+                <span>60°C</span>
+            </div>
+        </div>
 
-    <!-- Humidity Display Row -->
-    <div class="sensor-row" id="humidity">
-        Humidity: -- %
+        <!-- Humidity Circle -->
+        <div class="circle-container humidity-container">
+            <div class="circle-value">
+                <span class="sensor-text humidity-text" id="humidity-value">--</span>
+            </div>
+            <div class="scale-container">
+                <span>0%</span>
+                <span>100%</span>
+            </div>
+        </div>
     </div>
 
     <!-- Buttons Container -->
@@ -155,11 +191,13 @@
             const humidityRef = firebase.database().ref('humidity');
 
             temperatureRef.on('value', (snapshot) => {
-                document.getElementById('temperature').innerHTML = 'Temperature: ' + snapshot.val() + ' °C';
+                const tempValue = snapshot.val();
+                document.getElementById('temperature-value').innerHTML = tempValue + '°';
             });
 
             humidityRef.on('value', (snapshot) => {
-                document.getElementById('humidity').innerHTML = 'Humidity: ' + snapshot.val() + ' %';
+                const humidityValue = snapshot.val();
+                document.getElementById('humidity-value').innerHTML = humidityValue + '%';
             });
         }
 
@@ -170,7 +208,7 @@
 
         // Function to control the device
         function controlDevice(relayNum) {
-            const action = confirm(`Turn Relay ${relayNum} ON?`) ? true : false; // Confirm action
+            const action = confirm(`Turn Relay ${relayNum} ON?`) ? true : false;
             controlRelay(relayNum, action);
         }
 
