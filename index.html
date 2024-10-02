@@ -171,15 +171,15 @@
     </div>
 
     <script>
-        // Firebase configuration (replace this with your actual configuration)
+        // Firebase configuration (your actual configuration)
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-            databaseURL: "https://YOUR_PROJECT_ID.firebaseio.com",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_PROJECT_ID.appspot.com",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyDZVUDWT7H0CcV-XOeiuTnvTLooQF11YhM",
+            authDomain: "homeautomationproject-cc2ec.firebaseapp.com",
+            databaseURL: "https://homeautomationproject-cc2ec.firebaseio.com",
+            projectId: "homeautomationproject-cc2ec",
+            storageBucket: "homeautomationproject-cc2ec.appspot.com",
+            messagingSenderId: "679203505409",
+            appId: "1:679203505409:web:714cf55946f1e1eb388700"
         };
 
         // Initialize Firebase
@@ -192,18 +192,12 @@
 
             temperatureRef.on('value', (snapshot) => {
                 const tempValue = snapshot.val();
-                document.getElementById('temperature-value').innerHTML = (tempValue !== null ? tempValue : '--') + '°';
-            }, (error) => {
-                console.error("Error reading temperature: ", error);
-                document.getElementById('temperature-value').innerHTML = '--'; // fallback
+                document.getElementById('temperature-value').innerHTML = tempValue !== null ? tempValue + '°' : '--';
             });
 
             humidityRef.on('value', (snapshot) => {
                 const humidityValue = snapshot.val();
-                document.getElementById('humidity-value').innerHTML = (humidityValue !== null ? humidityValue : '--') + '%';
-            }, (error) => {
-                console.error("Error reading humidity: ", error);
-                document.getElementById('humidity-value').innerHTML = '--'; // fallback
+                document.getElementById('humidity-value').innerHTML = humidityValue !== null ? humidityValue + '%' : '--';
             });
         }
 
