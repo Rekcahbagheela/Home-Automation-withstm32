@@ -15,7 +15,7 @@
             justify-content: center;
             align-items: center;
             font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #fbc2eb, #a6c1ee); /* Soft background gradient */
+            background-image: url('https://reelssmarttechnologies.com/wp-content/uploads/2023/04/homeautomationbanner-1-1024x585.jpg');
         }
 
         /* Sensor Row Styling */
@@ -27,21 +27,24 @@
             margin-bottom: 20px;
         }
 
+        /* Circular progress container */
         .circle-container {
             width: 200px;
             height: 200px;
             border-radius: 50%;
-            background: linear-gradient(135deg, #eecda3, #ef629f); /* Gradient for temperature */
+            background: conic-gradient(#ff8c00 0% 0%, #fff 0% 100%); /* Initial background for temperature */
             display: flex;
             justify-content: center;
             align-items: center;
             position: relative;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            transition: background 0.5s ease-in-out;
+            animation: pulse 2s infinite; /* Add animation */
         }
 
         /* Humidity Circle Gradient */
         .humidity-container {
-            background: linear-gradient(135deg, #89f7fe, #66a6ff); /* Gradient for humidity */
+            background: conic-gradient(#66a6ff 0% 0%, #fff 0% 100%); /* Initial background for humidity */
         }
 
         /* Inner circle for displaying values */
@@ -62,7 +65,7 @@
         .sensor-text {
             font-size: 50px;
             font-weight: bold;
-            color: #ef629f; /* Matching the inner gradient color */
+            color: #ff8c00; /* Matching the initial temperature gradient color */
         }
 
         .humidity-text {
@@ -130,17 +133,30 @@
                 height: 80px;
             }
         }
+
+        /* Animation Keyframes */
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(255, 140, 0, 0.6);
+            }
+            50% {
+                transform: scale(1.05);
+                box-shadow: 0 0 30px rgba(255, 140, 0, 1);
+            }
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 20px rgba(255, 140, 0, 0.6);
+            }
+        }
     </style>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
 <body>
 
     <!-- Temperature and Humidity Circular Displays -->
     <div class="sensor-container">
         <!-- Temperature Circle -->
-        <div class="circle-container">
+        <div class="circle-container" id="temperature-circle">
             <div class="circle-value">
                 <span class="sensor-text" id="temperature-value">--</span>
             </div>
@@ -151,7 +167,7 @@
         </div>
 
         <!-- Humidity Circle -->
-        <div class="circle-container humidity-container">
+        <div class="circle-container humidity-container" id="humidity-circle">
             <div class="circle-value">
                 <span class="sensor-text humidity-text" id="humidity-value">--</span>
             </div>
@@ -164,51 +180,98 @@
 
     <!-- Buttons Container -->
     <div class="button-container">
-        <button onclick="controlDevice(1)">Relay 1</button>
-        <button onclick="controlDevice(2)">Relay 2</button>
-        <button onclick="controlDevice(3)">Relay 3</button>
-        <button onclick="controlDevice(4)">Relay 4</button>
+        <button id="relay1" onclick="controlDevice(1)">Relay 1</button>
+        <button id="relay2" onclick="controlDevice(2)">Relay 2</button>
+        <button id="relay3" onclick="controlDevice(3)">Relay 3</button>
+        <button id="relay4" onclick="controlDevice(4)">Relay 4</button>
     </div>
 
-    <script>
-        // Firebase configuration (your actual configuration)
+    <script type="module">
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
+
+        // Firebase configuration
         const firebaseConfig = {
-           apiKey: "AIzaSyDVZUDWT7H0CcV-XOeiuTnvILooQF11YhM",
-           authDomain: "homeautomationproject-cc2ec.firebaseapp.com",
-           projectId: "homeautomationproject-cc2ec",
-           storageBucket: "homeautomationproject-cc2ec.appspot.com",
-           messagingSenderId: "679203505409",
-           appId: "1:679203505409:web:714cf55946f1e1eb388700"
-          };
+            apiKey: "AIzaSyDXOVNWf7zFxibkK0ObjJFzxZWMWNp9gro",
+            authDomain: "automation-228ff.firebaseapp.com",
+            databaseURL: "https://automation-228ff-default-rtdb.asia-southeast1.firebasedatabase.app/",
+            projectId: "automation-228ff",
+            storageBucket: "automation-228ff.appspot.com",
+            messagingSenderId: "305770090629",
+            appId: "1:305770090629:web:5f42e0f9a7bfa0f88999ec"
+        };
 
         // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // Relay states
+        const relayStates = [0, 0, 0, 0]; // Initial states for Relay 1 to Relay 4 (0 = OFF, 1 = ON)
 
         // Function to update UI with temperature and humidity
         function updateSensorData() {
-            const temperatureRef = firebase.database().ref('temperature');
-            const humidityRef = firebase.database().ref('humidity');
+            const temperatureRef = ref(db, 'temperature');
+            const humidityRef = ref(db, 'humidity');
 
-            temperatureRef.on('value', (snapshot) => {
+            onValue(temperatureRef, (snapshot) => {
                 const tempValue = snapshot.val();
-                document.getElementById('temperature-value').innerHTML = tempValue !== null ? tempValue + '°' : '--';
+                document.getElementById('temperature-value').innerHTML = tempValue + '°';
+                updateCircleProgress('temperature-circle', tempValue, 20, 60, 'temperature');
             });
 
-            humidityRef.on('value', (snapshot) => {
+            onValue(humidityRef, (snapshot) => {
                 const humidityValue = snapshot.val();
-                document.getElementById('humidity-value').innerHTML = humidityValue !== null ? humidityValue + '%' : '--';
+                document.getElementById('humidity-value').innerHTML = humidityValue + '%';
+                updateCircleProgress('humidity-circle', humidityValue, 0, 100, 'humidity');
             });
+        }
+
+        // Function to update circular progress bar and change color based on temperature and humidity
+        function updateCircleProgress(elementId, value, min, max, type) {
+            const circleElement = document.getElementById(elementId);
+            const percentage = (value - min) / (max - min) * 100;
+            let color = '#ff8c00'; // Default color for temperature
+            let textColor = '#ff8c00';
+
+            // Adjust the color based on type
+            if (type === 'temperature') {
+                // Adjust the color based on temperature value
+                if (value < 30) {
+                    color = '#00c6ff'; // Cool color for lower temperatures
+                } else if (value >= 30 && value < 45) {
+                    color = '#ff8c00'; // Warm color for moderate temperatures
+                } else {
+                    color = '#ff4b2b'; // Hot color for high temperatures
+                }
+                textColor = color; // Change text color as well
+            } else if (type === 'humidity') {
+                // Adjust the color based on humidity value
+                if (value < 30) {
+                    color = '#00ff00'; // Low humidity
+                } else if (value >= 30 && value < 70) {
+                    color = '#ff8c00'; // Moderate humidity
+                } else {
+                    color = '#ff4b2b'; // High humidity
+                }
+                textColor = color; // Change text color as well
+            }
+
+            circleElement.style.background = `conic-gradient(${color} 0% ${percentage}%, #fff ${percentage}% 100%)`;
+            document.querySelector(`#${elementId} .sensor-text`).style.color = textColor; // Change text color based on sensor
         }
 
         // Function to control the relay
         function controlRelay(relayNum, state) {
-            firebase.database().ref(`relay${relayNum}`).set(state ? 1 : 0);
+            set(ref(db, `relay${relayNum}`), state);
         }
 
         // Function to control the device
-        function controlDevice(relayNum) {
-            const action = confirm(`Turn Relay ${relayNum} ON?`) ? true : false;
-            controlRelay(relayNum, action);
+        window.controlDevice = function(relayNum) {
+            // Toggle the state of the relay
+            relayStates[relayNum - 1] = relayStates[relayNum - 1] === 0 ? 1 : 0;
+            controlRelay(relayNum, relayStates[relayNum - 1]);
+            alert(`Relay ${relayNum} is now ${relayStates[relayNum - 1] === 1 ? 'ON' : 'OFF'}`);
         }
 
         // Update sensor data on page load
