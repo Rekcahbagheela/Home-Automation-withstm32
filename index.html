@@ -32,19 +32,19 @@
             width: 200px;
             height: 200px;
             border-radius: 50%;
-            background: conic-gradient(#ff8c00 0% 0%, #fff 0% 100%); /* Initial background for temperature */
+            background: conic-gradient(#ff8c00 0% 0%, #fff 0% 100%);
             display: flex;
             justify-content: center;
             align-items: center;
             position: relative;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
             transition: background 0.5s ease-in-out;
-            animation: pulse 2s infinite; /* Add animation */
+            animation: pulse 2s infinite;
         }
 
         /* Humidity Circle Gradient */
         .humidity-container {
-            background: conic-gradient(#66a6ff 0% 0%, #fff 0% 100%); /* Initial background for humidity */
+            background: conic-gradient(#66a6ff 0% 0%, #fff 0% 100%);
         }
 
         /* Inner circle for displaying values */
@@ -65,11 +65,11 @@
         .sensor-text {
             font-size: 50px;
             font-weight: bold;
-            color: #ff8c00; /* Matching the initial temperature gradient color */
+            color: #ff8c00;
         }
 
         .humidity-text {
-            color: #66a6ff; /* Matching the humidity gradient */
+            color: #66a6ff;
         }
 
         /* Scale Styling */
@@ -180,35 +180,34 @@
 
     <!-- Buttons Container -->
     <div class="button-container">
-        <button id="relay1" onclick="controlDevice(1)">Relay 1</button>
-        <button id="relay2" onclick="controlDevice(2)">Relay 2</button>
-        <button id="relay3" onclick="controlDevice(3)">Relay 3</button>
-        <button id="relay4" onclick="controlDevice(4)">Relay 4</button>
+        <button id="relay1">Relay 1</button>
+        <button id="relay2">Relay 2</button>
+        <button id="relay3">Relay 3</button>
+        <button id="relay4">Relay 4</button>
     </div>
 
     <script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+        // Import Firebase modules
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+        import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-database.js";
 
-  // Your web app's Firebase configuration
-  const firebaseConfig = {
-    apiKey: "AIzaSyBYezf_NIW2trp01OGHEpBNu46Eh7DzJ6U",
-    authDomain: "newautomation-56b65.firebaseapp.com",
-    projectId: "newautomation-56b65",
-    storageBucket: "newautomation-56b65.firebasestorage.app",
-    messagingSenderId: "317578598678",
-    appId: "1:317578598678:web:329edfe8e56e422f779837"
-  };
-
+        // New Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBYezf_NIW2trp01OGHEpBNu46Eh7DzJ6U",
+            authDomain: "newautomation-56b65.firebaseapp.com",
+            databaseURL: "https://newautomation-56b65-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "newautomation-56b65",
+            storageBucket: "newautomation-56b65.appspot.com",
+            messagingSenderId: "317578598678",
+            appId: "1:317578598678:web:329edfe8e56e422f779837"
+        };
 
         // Initialize Firebase
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
         // Relay states
-        const relayStates = [0, 0, 0, 0]; // Initial states for Relay 1 to Relay 4 (0 = OFF, 1 = ON)
+        const relayStates = [0, 0, 0, 0];
 
         // Function to update UI with temperature and humidity
         function updateSensorData() {
@@ -228,55 +227,44 @@
             });
         }
 
-        // Function to update circular progress bar and change color based on temperature and humidity
+        // Function to update circular progress bar
         function updateCircleProgress(elementId, value, min, max, type) {
             const circleElement = document.getElementById(elementId);
             const percentage = (value - min) / (max - min) * 100;
-            let color = '#ff8c00'; // Default color for temperature
+            let color = '#ff8c00';
             let textColor = '#ff8c00';
 
-            // Adjust the color based on type
             if (type === 'temperature') {
-                // Adjust the color based on temperature value
-                if (value < 30) {
-                    color = '#00c6ff'; // Cool color for lower temperatures
-                } else if (value >= 30 && value < 45) {
-                    color = '#ff8c00'; // Warm color for moderate temperatures
-                } else {
-                    color = '#ff4b2b'; // Hot color for high temperatures
-                }
-                textColor = color; // Change text color as well
+                if (value < 30) color = '#00c6ff';
+                else if (value >= 30 && value < 45) color = '#ff8c00';
+                else color = '#ff4b2b';
+                textColor = color;
             } else if (type === 'humidity') {
-                // Adjust the color based on humidity value
-                if (value < 30) {
-                    color = '#00ff00'; // Low humidity
-                } else if (value >= 30 && value < 70) {
-                    color = '#ff8c00'; // Moderate humidity
-                } else {
-                    color = '#ff4b2b'; // High humidity
-                }
-                textColor = color; // Change text color as well
+                if (value < 30) color = '#00ff00';
+                else if (value >= 30 && value < 70) color = '#ff8c00';
+                else color = '#ff4b2b';
+                textColor = color;
             }
 
             circleElement.style.background = `conic-gradient(${color} 0% ${percentage}%, #fff ${percentage}% 100%)`;
-            document.querySelector(`#${elementId} .sensor-text`).style.color = textColor; // Change text color based on sensor
+            document.querySelector(`#${elementId} .sensor-text`).style.color = textColor;
         }
 
-        // Function to control the relay
-        function controlRelay(relayNum, state) {
-            set(ref(db, `relay${relayNum}`), state);
+        // Device control function
+        function controlDevice(relayNum) {
+            relayStates[relayNum - 1] = relayStates[relayNum - 1] ? 0 : 1;
+            set(ref(db, 'relay' + relayNum), relayStates[relayNum - 1]);
         }
 
-        // Function to control the device
-        window.controlDevice = function(relayNum) {
-            // Toggle the state of the relay
-            relayStates[relayNum - 1] = relayStates[relayNum - 1] === 0 ? 1 : 0;
-            controlRelay(relayNum, relayStates[relayNum - 1]);
-            alert(`Relay ${relayNum} is now ${relayStates[relayNum - 1] === 1 ? 'ON' : 'OFF'}`);
-        }
+        // Ensure the page content is loaded before binding events
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('relay1').addEventListener('click', () => controlDevice(1));
+            document.getElementById('relay2').addEventListener('click', () => controlDevice(2));
+            document.getElementById('relay3').addEventListener('click', () => controlDevice(3));
+            document.getElementById('relay4').addEventListener('click', () => controlDevice(4));
 
-        // Update sensor data on page load
-        updateSensorData();
+            updateSensorData();
+        });
     </script>
 
 </body>
